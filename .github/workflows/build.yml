@@ -1,0 +1,43 @@
+name: Build APK
+
+on:
+  push:
+    branches: [ main ]
+  pull_request:
+    branches: [ main ]
+  workflow_dispatch:
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up JDK 17
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '17'
+
+      - name: Set up .NET 9
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: '9.0.x'
+
+      - name: Install MAUI Android workload
+        run: dotnet workload restore
+
+      - name: Restore dependencies
+        run: dotnet restore
+
+      - name: Build APK (Release)
+        run: dotnet build AppOpenerAndTimer.csproj -c Release -f net9.0-android -p:AndroidPackageFormat=apk --no-restore
+
+      - name: Upload APK artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: AppOpenerAndTimer-apk
+          path: '**/bin/Release/net9.0-android/*-Signed.apk'
+          if-no-files-found: error

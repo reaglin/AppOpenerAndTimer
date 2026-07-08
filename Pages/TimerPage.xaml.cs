@@ -78,21 +78,18 @@ public partial class TimerPage : ContentPage
 
     void RefreshTimers()
     {
-        var now = DateTime.UtcNow;
         foreach (var entry in _apps)
         {
-            if (ScheduleState.LaunchTimes.TryGetValue(entry.PackageName, out var launchedAt))
+            var launched = ScheduleState.LaunchTimes.ContainsKey(entry.PackageName);
+            if (launched)
             {
-                if (ScheduleState.ClosedTimes.TryGetValue(entry.PackageName, out var closedAt))
-                {
-                    entry.ElapsedText = Format(closedAt - launchedAt);
-                    entry.Status = "Closed";
-                }
+                entry.ElapsedText = Format(TimeSpan.FromMilliseconds(ScheduleState.ForegroundMillis(entry.PackageName)));
+                if (entry.PackageName == ScheduleState.CurrentForeground)
+                    entry.Status = "Open (on screen)";
+                else if (ScheduleState.ForegroundSeen.Contains(entry.PackageName))
+                    entry.Status = "Off screen";
                 else
-                {
-                    entry.ElapsedText = Format(now - launchedAt);
-                    entry.Status = ScheduleState.ForegroundSeen.Contains(entry.PackageName) ? "Open" : "Opening…";
-                }
+                    entry.Status = "Opening…";
             }
             else if (ScheduleState.IsRunning)
             {
@@ -106,14 +103,36 @@ public partial class TimerPage : ContentPage
             }
         }
 
-        var launched = _apps.Count(a => ScheduleState.LaunchTimes.ContainsKey(a.PackageName));
-        var closed = _apps.Count(a => ScheduleState.ClosedTimes.ContainsKey(a.PackageName));
+        UpdateRunState();
+
+        var launchedCount = _apps.Count(a => ScheduleState.LaunchTimes.ContainsKey(a.PackageName));
         if (ScheduleState.IsRunning)
-            StatusLabel.Text = $"Running… {launched} launched so far.";
-        else if (launched > 0)
-            StatusLabel.Text = closed >= launched
-                ? "Done. All apps closed; final times shown."
-                : $"Timing… {closed}/{launched} closed. Timers stop as you close each app.";
+            StatusLabel.Text = $"Launching… {launchedCount} started so far.";
+        else if (launchedCount > 0)
+            StatusLabel.Text = "Timers show how long each app has been on screen.";
+    }
+
+    void UpdateRunState()
+    {
+        var running = ScheduleState.IsRunning || IsSchedulerServiceRunning();
+        RunStateLabel.Text = running ? "● Running" : "● Stopped";
+        RunStateLabel.TextColor = running ? Colors.SeaGreen : Colors.Gray;
+    }
+
+    static bool IsSchedulerServiceRunning()
+    {
+        // The service keeps timing (and stays alive) after launching finishes,
+        // so "running" means the service is still up, not just mid-launch.
+        var am = (Android.App.ActivityManager)Application.Context
+            .GetSystemService(Context.ActivityService)!;
+#pragma warning disable CA1422 // GetRunningServices still reports our own services
+        foreach (var svc in am.GetRunningServices(int.MaxValue)!)
+        {
+            if (svc.Service?.ClassName?.Contains(nameof(LaunchSchedulerService)) == true)
+                return true;
+        }
+#pragma warning restore CA1422
+        return false;
     }
 
     static string Format(TimeSpan t)

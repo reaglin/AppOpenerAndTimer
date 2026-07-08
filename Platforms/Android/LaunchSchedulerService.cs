@@ -31,7 +31,12 @@ public class LaunchSchedulerService : Service
     int _index;
     bool _scheduleDone;
     string? _lastForeground;
+    DateTime _lastPoll;
+    DateTime? _idleSince;
     Handler? _handler;
+
+    // Stop the service this long after the user has left every launched app.
+    static readonly TimeSpan IdleGrace = TimeSpan.FromSeconds(45);
 
     public override IBinder? OnBind(Intent? intent) => null;
 
@@ -50,6 +55,8 @@ public class LaunchSchedulerService : Service
         _index = 0;
         _scheduleDone = false;
         _lastForeground = null;
+        _lastPoll = DateTime.UtcNow;
+        _idleSince = null;
 
         CreateChannel();
         StartInForeground("Starting…");
@@ -109,47 +116,52 @@ public class LaunchSchedulerService : Service
         UpdateNotification("All apps launched. Timing until you close each one…");
     }
 
-    // --- foreground / close tracking ---
+    // --- foreground time tracking ---
 
     void Poll()
     {
+        var now = DateTime.UtcNow;
+        var deltaMs = (long)(now - _lastPoll).TotalMilliseconds;
+        _lastPoll = now;
+
         var foreground = UsageAccess.LatestForeground() ?? _lastForeground;
         _lastForeground = foreground;
 
-        var changed = false;
-        var self = PackageName;
+        // Which of our launched apps (if any) is actually on screen right now?
+        var currentTracked = foreground != null && ScheduleState.LaunchTimes.ContainsKey(foreground)
+            ? foreground
+            : null;
 
-        foreach (var pkg in ScheduleState.LaunchTimes.Keys.ToList())
+        // Add the elapsed slice to that app's on-screen total. Guard against a
+        // negative or huge delta (e.g. after the device slept).
+        if (currentTracked != null && deltaMs > 0 && deltaMs < 60_000)
         {
-            if (ScheduleState.ClosedTimes.ContainsKey(pkg))
-                continue;
-
-            if (pkg == foreground)
-            {
-                // This app is on screen now.
-                if (ScheduleState.ForegroundSeen.Add(pkg))
-                    changed = true;
-            }
-            else if (ScheduleState.ForegroundSeen.Contains(pkg) && foreground != self)
-            {
-                // It was open and is no longer on screen (and we didn't just
-                // pop back into our own app) -> treat it as closed. Freeze it.
-                ScheduleState.ClosedTimes[pkg] = DateTime.UtcNow;
-                changed = true;
-            }
+            ScheduleState.ForegroundSeen.Add(currentTracked);
+            ScheduleState.ForegroundMs.TryGetValue(currentTracked, out var ms);
+            ScheduleState.ForegroundMs[currentTracked] = ms + deltaMs;
         }
 
-        if (changed)
-            ScheduleState.RaiseChanged();
+        ScheduleState.CurrentForeground = currentTracked;
+        ScheduleState.RaiseChanged();
 
-        var everythingClosed = ScheduleState.LaunchTimes.Count > 0
-            && ScheduleState.LaunchTimes.Keys.All(k => ScheduleState.ClosedTimes.ContainsKey(k));
-
-        if (_scheduleDone && everythingClosed)
+        // Once launching is done and the user has been away from all of our apps
+        // for the grace period, stop the service.
+        if (_scheduleDone)
         {
-            UpdateNotification("All apps closed. Tracking finished.");
-            StopTracking();
-            return;
+            if (currentTracked == null)
+            {
+                _idleSince ??= now;
+                if (now - _idleSince >= IdleGrace)
+                {
+                    UpdateNotification("Timing finished.");
+                    StopTracking();
+                    return;
+                }
+            }
+            else
+            {
+                _idleSince = null;
+            }
         }
 
         _handler?.PostDelayed(Poll, PollIntervalMs);

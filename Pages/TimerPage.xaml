@@ -7,10 +7,14 @@
 
     <Grid RowDefinitions="Auto,Auto,Auto,*,Auto" Padding="14" RowSpacing="10">
 
-        <VerticalStackLayout Grid.Row="0" Spacing="2">
-            <Label x:Name="HeaderLabel" FontSize="22" FontAttributes="Bold" />
-            <Label x:Name="SubtitleLabel" FontSize="12" TextColor="Gray" />
-        </VerticalStackLayout>
+        <Grid Grid.Row="0" ColumnDefinitions="*,Auto">
+            <VerticalStackLayout Grid.Column="0" Spacing="2">
+                <Label x:Name="HeaderLabel" FontSize="22" FontAttributes="Bold" />
+                <Label x:Name="SubtitleLabel" FontSize="12" TextColor="Gray" />
+            </VerticalStackLayout>
+            <Label Grid.Column="1" x:Name="RunStateLabel" Text="● Stopped"
+                   FontAttributes="Bold" VerticalOptions="Center" TextColor="Gray" />
+        </Grid>
 
         <Border x:Name="OverlayWarning" Grid.Row="1" IsVisible="False" Padding="8"
                 Stroke="OrangeRed" StrokeShape="RoundRectangle 6">

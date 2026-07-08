@@ -31,9 +31,12 @@ public class LaunchSchedulerService : Service
     int _index;
     bool _scheduleDone;
     string? _lastForeground;
-    DateTime _lastPoll;
     DateTime? _idleSince;
     Handler? _handler;
+
+    // Mark an app closed once it has been off screen this long (rides out the
+    // brief foreground blips during an app-open animation).
+    static readonly TimeSpan CloseGrace = TimeSpan.FromSeconds(6);
 
     // Stop the service this long after the user has left every launched app.
     static readonly TimeSpan IdleGrace = TimeSpan.FromSeconds(45);
@@ -55,7 +58,6 @@ public class LaunchSchedulerService : Service
         _index = 0;
         _scheduleDone = false;
         _lastForeground = null;
-        _lastPoll = DateTime.UtcNow;
         _idleSince = null;
 
         CreateChannel();
@@ -116,13 +118,11 @@ public class LaunchSchedulerService : Service
         UpdateNotification("All apps launched. Timing until you close each one…");
     }
 
-    // --- foreground time tracking ---
+    // --- foreground / close tracking ---
 
     void Poll()
     {
         var now = DateTime.UtcNow;
-        var deltaMs = (long)(now - _lastPoll).TotalMilliseconds;
-        _lastPoll = now;
 
         var foreground = UsageAccess.LatestForeground() ?? _lastForeground;
         _lastForeground = foreground;
@@ -132,16 +132,28 @@ public class LaunchSchedulerService : Service
             ? foreground
             : null;
 
-        // Add the elapsed slice to that app's on-screen total. Guard against a
-        // negative or huge delta (e.g. after the device slept).
-        if (currentTracked != null && deltaMs > 0 && deltaMs < 60_000)
+        if (currentTracked != null)
         {
             ScheduleState.ForegroundSeen.Add(currentTracked);
-            ScheduleState.ForegroundMs.TryGetValue(currentTracked, out var ms);
-            ScheduleState.ForegroundMs[currentTracked] = ms + deltaMs;
+            ScheduleState.LastForegroundAt[currentTracked] = now;
+            ScheduleState.StopTimes.Remove(currentTracked); // reopened -> resume
+        }
+        ScheduleState.CurrentForeground = currentTracked;
+
+        // Freeze the timer of any app that has been off screen past the grace
+        // window, at the moment it actually left the screen.
+        foreach (var pkg in ScheduleState.LaunchTimes.Keys)
+        {
+            if (pkg == currentTracked || ScheduleState.StopTimes.ContainsKey(pkg))
+                continue;
+            if (ScheduleState.ForegroundSeen.Contains(pkg)
+                && ScheduleState.LastForegroundAt.TryGetValue(pkg, out var lastFg)
+                && now - lastFg >= CloseGrace)
+            {
+                ScheduleState.StopTimes[pkg] = lastFg;
+            }
         }
 
-        ScheduleState.CurrentForeground = currentTracked;
         ScheduleState.RaiseChanged();
 
         // Once launching is done and the user has been away from all of our apps

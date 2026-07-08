@@ -2,11 +2,12 @@ namespace AppOpenerAndTimer.Services;
 
 /// <summary>
 /// Process-wide state shared between the foreground service (which owns the
-/// launch schedule and timing) and the UI (which reads it to render timers).
+/// launch schedule and close detection) and the UI (which reads it to render
+/// timers).
 ///
-/// Each app's timer is the total time it has actually been on screen
-/// (accumulated foreground time), which is robust to the brief foreground
-/// blips that happen during app-open animations.
+/// Each app's timer is simply (stopped-at ?? now) - launched-at. An app is
+/// "stopped" once it has been off screen past a grace window; it resumes if the
+/// user reopens it.
 /// </summary>
 public static class ScheduleState
 {
@@ -16,8 +17,11 @@ public static class ScheduleState
     /// <summary>Package name -> UTC time it was launched.</summary>
     public static readonly Dictionary<string, DateTime> LaunchTimes = new();
 
-    /// <summary>Package name -> accumulated milliseconds the app has been on screen.</summary>
-    public static readonly Dictionary<string, long> ForegroundMs = new();
+    /// <summary>Package name -> the last UTC time it was seen on screen.</summary>
+    public static readonly Dictionary<string, DateTime> LastForegroundAt = new();
+
+    /// <summary>Package name -> UTC time it was detected closed (timer frozen).</summary>
+    public static readonly Dictionary<string, DateTime> StopTimes = new();
 
     /// <summary>Packages we have seen reach the foreground at least once.</summary>
     public static readonly HashSet<string> ForegroundSeen = new();
@@ -33,15 +37,14 @@ public static class ScheduleState
 
     public static void RaiseChanged() => Changed?.Invoke();
 
-    /// <summary>Milliseconds an app has been on screen so far.</summary>
-    public static long ForegroundMillis(string package)
-        => ForegroundMs.TryGetValue(package, out var ms) ? ms : 0;
+    public static bool IsStopped(string package) => StopTimes.ContainsKey(package);
 
     /// <summary>Clear all recorded timing (does not touch IsRunning).</summary>
     public static void Reset()
     {
         LaunchTimes.Clear();
-        ForegroundMs.Clear();
+        LastForegroundAt.Clear();
+        StopTimes.Clear();
         ForegroundSeen.Clear();
         CurrentForeground = null;
         CurrentPackage = null;

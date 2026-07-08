@@ -1,5 +1,6 @@
 using System.ComponentModel;
 using System.Runtime.CompilerServices;
+using Microsoft.Maui.Graphics;
 
 namespace AppOpenerAndTimer.Models;
 
@@ -30,6 +31,13 @@ public class AppEntry : INotifyPropertyChanged
     {
         get => _elapsedText;
         set { if (_elapsedText != value) { _elapsedText = value; OnPropertyChanged(); } }
+    }
+
+    private Color _timerColor = Colors.Gray;
+    public Color TimerColor
+    {
+        get => _timerColor;
+        set { if (_timerColor != value) { _timerColor = value; OnPropertyChanged(); } }
     }
 
     public event PropertyChangedEventHandler? PropertyChanged;

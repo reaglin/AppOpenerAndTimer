@@ -78,28 +78,37 @@ public partial class TimerPage : ContentPage
 
     void RefreshTimers()
     {
+        var now = DateTime.UtcNow;
         foreach (var entry in _apps)
         {
-            var launched = ScheduleState.LaunchTimes.ContainsKey(entry.PackageName);
-            if (launched)
+            if (ScheduleState.LaunchTimes.TryGetValue(entry.PackageName, out var launchedAt))
             {
-                entry.ElapsedText = Format(TimeSpan.FromMilliseconds(ScheduleState.ForegroundMillis(entry.PackageName)));
-                if (entry.PackageName == ScheduleState.CurrentForeground)
-                    entry.Status = "Open (on screen)";
-                else if (ScheduleState.ForegroundSeen.Contains(entry.PackageName))
-                    entry.Status = "Off screen";
+                if (ScheduleState.StopTimes.TryGetValue(entry.PackageName, out var stoppedAt))
+                {
+                    entry.ElapsedText = Format(stoppedAt - launchedAt);
+                    entry.Status = "Closed";
+                    entry.TimerColor = Colors.Black;
+                }
                 else
-                    entry.Status = "Opening…";
+                {
+                    entry.ElapsedText = Format(now - launchedAt);
+                    entry.TimerColor = Colors.SeaGreen;
+                    entry.Status = entry.PackageName == ScheduleState.CurrentForeground
+                        ? "Open (on screen)"
+                        : ScheduleState.ForegroundSeen.Contains(entry.PackageName) ? "Off screen" : "Opening…";
+                }
             }
             else if (ScheduleState.IsRunning)
             {
                 entry.Status = "Waiting to launch…";
                 entry.ElapsedText = "--:--";
+                entry.TimerColor = Colors.Gray;
             }
             else
             {
                 entry.Status = "Not launched";
                 entry.ElapsedText = "00:00";
+                entry.TimerColor = Colors.Gray;
             }
         }
 
@@ -109,7 +118,7 @@ public partial class TimerPage : ContentPage
         if (ScheduleState.IsRunning)
             StatusLabel.Text = $"Launching… {launchedCount} started so far.";
         else if (launchedCount > 0)
-            StatusLabel.Text = "Timers show how long each app has been on screen.";
+            StatusLabel.Text = "Green = still running · Black = closed. Time is from when each app opened.";
     }
 
     void UpdateRunState()

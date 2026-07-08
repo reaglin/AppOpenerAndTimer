@@ -32,3 +32,6 @@ artifacts/
 # OS files
 .DS_Store
 Thumbs.db
+
+# Recorded demo videos
+*.mp4

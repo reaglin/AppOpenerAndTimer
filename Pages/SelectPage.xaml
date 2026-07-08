@@ -1,0 +1,39 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<ContentPage xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+             xmlns:models="clr-namespace:AppOpenerAndTimer.Models"
+             x:Class="AppOpenerAndTimer.Pages.SelectPage">
+
+    <Grid RowDefinitions="Auto,Auto,*,Auto" Padding="14" RowSpacing="10">
+
+        <VerticalStackLayout Grid.Row="0" Spacing="2">
+            <Label x:Name="HeaderLabel" FontSize="22" FontAttributes="Bold" />
+            <Label Text="Tick the apps for this list." FontSize="12" TextColor="Gray" />
+        </VerticalStackLayout>
+
+        <HorizontalStackLayout Grid.Row="1" Spacing="8" VerticalOptions="Center">
+            <Label Text="Seconds between launches:" VerticalOptions="Center" />
+            <Entry x:Name="IntervalEntry" Keyboard="Numeric" WidthRequest="70" />
+        </HorizontalStackLayout>
+
+        <CollectionView Grid.Row="2" x:Name="AppsView">
+            <CollectionView.ItemTemplate>
+                <DataTemplate x:DataType="models:AppEntry">
+                    <Grid ColumnDefinitions="Auto,*" Padding="4,8" ColumnSpacing="8">
+                        <CheckBox Grid.Column="0" IsChecked="{Binding IsSelected, Mode=TwoWay}"
+                                  VerticalOptions="Center" />
+                        <Label Grid.Column="1" Text="{Binding Label}" FontSize="16" VerticalOptions="Center" />
+                    </Grid>
+                </DataTemplate>
+            </CollectionView.ItemTemplate>
+            <CollectionView.EmptyView>
+                <Label Text="Loading installed apps…" HorizontalOptions="Center" Margin="0,40,0,0" />
+            </CollectionView.EmptyView>
+        </CollectionView>
+
+        <Grid Grid.Row="3" ColumnDefinitions="*,*" ColumnSpacing="10">
+            <Button Grid.Column="0" Text="Save" Clicked="OnSave" />
+            <Button Grid.Column="1" Text="▶ Start" Clicked="OnStart" />
+        </Grid>
+    </Grid>
+</ContentPage>

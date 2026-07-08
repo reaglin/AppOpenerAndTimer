@@ -1,0 +1,47 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<ContentPage xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+             xmlns:models="clr-namespace:AppOpenerAndTimer.Models"
+             x:Class="AppOpenerAndTimer.Pages.TimerPage"
+             Title="Timers">
+
+    <Grid RowDefinitions="Auto,Auto,Auto,*,Auto" Padding="14" RowSpacing="10">
+
+        <VerticalStackLayout Grid.Row="0" Spacing="2">
+            <Label x:Name="HeaderLabel" FontSize="22" FontAttributes="Bold" />
+            <Label x:Name="SubtitleLabel" FontSize="12" TextColor="Gray" />
+        </VerticalStackLayout>
+
+        <Border x:Name="OverlayWarning" Grid.Row="1" IsVisible="False" Padding="8"
+                Stroke="OrangeRed" StrokeShape="RoundRectangle 6">
+            <VerticalStackLayout Spacing="6">
+                <Label Text="⚠ 'Display over other apps' is off. Without it, Android blocks launching apps while this one is in the background."
+                       FontSize="12" />
+                <Button Text="Grant permission" Clicked="OnGrantOverlay" />
+            </VerticalStackLayout>
+        </Border>
+
+        <Grid Grid.Row="2" ColumnDefinitions="*,*,*" ColumnSpacing="8">
+            <Button Grid.Column="0" x:Name="GoButton" Text="▶ Go" Clicked="OnGo" />
+            <Button Grid.Column="1" Text="■ Stop" Clicked="OnStop" />
+            <Button Grid.Column="2" Text="↻ Reset" Clicked="OnReset" />
+        </Grid>
+
+        <CollectionView Grid.Row="3" x:Name="AppsView">
+            <CollectionView.ItemTemplate>
+                <DataTemplate x:DataType="models:AppEntry">
+                    <Grid ColumnDefinitions="*,Auto" Padding="4,8" ColumnSpacing="8">
+                        <VerticalStackLayout Grid.Column="0" VerticalOptions="Center" Spacing="1">
+                            <Label Text="{Binding Label}" FontSize="16" />
+                            <Label Text="{Binding Status}" FontSize="11" TextColor="Gray" />
+                        </VerticalStackLayout>
+                        <Label Grid.Column="1" Text="{Binding ElapsedText}" FontSize="18"
+                               FontFamily="Monospace" VerticalOptions="Center" />
+                    </Grid>
+                </DataTemplate>
+            </CollectionView.ItemTemplate>
+        </CollectionView>
+
+        <Label Grid.Row="4" x:Name="StatusLabel" Text="Ready." FontSize="12" TextColor="Gray" />
+    </Grid>
+</ContentPage>

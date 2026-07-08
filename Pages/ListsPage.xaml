@@ -1,0 +1,55 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<ContentPage xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+             xmlns:models="clr-namespace:AppOpenerAndTimer.Models"
+             x:Class="AppOpenerAndTimer.Pages.ListsPage"
+             Title="App Opener and Timer">
+
+    <ContentPage.ToolbarItems>
+        <ToolbarItem Text="New" Clicked="OnNewList" />
+    </ContentPage.ToolbarItems>
+
+    <Grid RowDefinitions="Auto,*,Auto" Padding="14" RowSpacing="10">
+
+        <Label Grid.Row="0" Text="My App Lists" FontSize="22" FontAttributes="Bold" />
+
+        <CollectionView Grid.Row="1" x:Name="ListsView">
+            <CollectionView.ItemTemplate>
+                <DataTemplate x:DataType="models:AppList">
+                    <Border Margin="0,6" Padding="12" StrokeThickness="1" StrokeShape="RoundRectangle 10">
+                        <Grid RowDefinitions="Auto,Auto" ColumnSpacing="6">
+                            <VerticalStackLayout Spacing="1">
+                                <Label Text="{Binding Name}" FontSize="18" FontAttributes="Bold" />
+                                <Label FontSize="12" TextColor="Gray">
+                                    <Label.Text>
+                                        <MultiBinding StringFormat="{}{0} apps &#183; {1}s apart">
+                                            <Binding Path="Packages.Count" />
+                                            <Binding Path="IntervalSeconds" />
+                                        </MultiBinding>
+                                    </Label.Text>
+                                </Label>
+                            </VerticalStackLayout>
+                            <HorizontalStackLayout Grid.Row="1" Spacing="8" Margin="0,10,0,0">
+                                <Button Text="Open" FontSize="13" Padding="14,4" Clicked="OnOpenList"
+                                        CommandParameter="{Binding .}" />
+                                <Button Text="Edit" FontSize="13" Padding="14,4" Clicked="OnEditList"
+                                        CommandParameter="{Binding .}" />
+                                <Button Text="Delete" FontSize="13" Padding="14,4" Clicked="OnDeleteList"
+                                        CommandParameter="{Binding .}" />
+                            </HorizontalStackLayout>
+                        </Grid>
+                    </Border>
+                </DataTemplate>
+            </CollectionView.ItemTemplate>
+            <CollectionView.EmptyView>
+                <VerticalStackLayout Padding="20" Spacing="8" VerticalOptions="Center">
+                    <Label Text="No saved lists yet." HorizontalOptions="Center" FontSize="16" />
+                    <Label Text="Tap 'New' to pick some apps and save them as a list."
+                           HorizontalOptions="Center" FontSize="12" TextColor="Gray" />
+                </VerticalStackLayout>
+            </CollectionView.EmptyView>
+        </CollectionView>
+
+        <Button Grid.Row="2" Text="+ New list" Clicked="OnNewList" />
+    </Grid>
+</ContentPage>

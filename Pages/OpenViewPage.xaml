@@ -1,0 +1,30 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<ContentPage xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+             x:Class="AppOpenerAndTimer.Pages.OpenViewPage">
+
+    <Grid RowDefinitions="Auto,*,Auto" Padding="14" RowSpacing="10">
+
+        <VerticalStackLayout Grid.Row="0" Spacing="2">
+            <Label x:Name="NameLabel" FontSize="22" FontAttributes="Bold" />
+            <Label x:Name="SubtitleLabel" FontSize="12" TextColor="Gray" />
+        </VerticalStackLayout>
+
+        <CollectionView Grid.Row="1" x:Name="AppsView">
+            <CollectionView.ItemTemplate>
+                <DataTemplate x:DataType="x:String">
+                    <Label Text="{Binding .}" FontSize="16" Padding="4,10" />
+                </DataTemplate>
+            </CollectionView.ItemTemplate>
+            <CollectionView.EmptyView>
+                <Label Text="This list has no apps. Tap Edit to add some."
+                       HorizontalOptions="Center" Margin="0,40,0,0" TextColor="Gray" />
+            </CollectionView.EmptyView>
+        </CollectionView>
+
+        <Grid Grid.Row="2" ColumnDefinitions="*,*" ColumnSpacing="10">
+            <Button Grid.Column="0" Text="Edit" Clicked="OnEdit" />
+            <Button Grid.Column="1" Text="▶ Go" Clicked="OnGo" />
+        </Grid>
+    </Grid>
+</ContentPage>

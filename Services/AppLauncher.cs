@@ -42,6 +42,15 @@ public static class AppLauncher
         return results;
     }
 
+    /// <summary>Maps package name -> display label for every launchable app.</summary>
+    public static Dictionary<string, string> GetLabelMap()
+    {
+        var map = new Dictionary<string, string>();
+        foreach (var (package, label) in GetLaunchableApps())
+            map[package] = label;
+        return map;
+    }
+
     /// <summary>Launches an app by package name. Returns false if it has no launch intent.</summary>
     public static bool Launch(string package)
     {

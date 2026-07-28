@@ -221,19 +221,19 @@ public class LaunchSchedulerService : Service
 
     Notification BuildNotification(string text)
     {
-        return new NotificationCompat.Builder(this, ChannelId)
-            .SetContentTitle("App Opener and Timer")
-            .SetContentText(text)
-            .SetSmallIcon(Android.Resource.Drawable.IcMenuManage)
-            .SetOngoing(true)
-            .SetOnlyAlertOnce(true)
-            .Build()!;
+        var builder = new NotificationCompat.Builder(this, ChannelId);
+        builder.SetContentTitle("App Opener and Timer");
+        builder.SetContentText(text);
+        builder.SetSmallIcon(Android.Resource.Drawable.IcMenuManage);
+        builder.SetOngoing(true);
+        builder.SetOnlyAlertOnce(true);
+        return builder.Build()!;
     }
 
     void StartInForeground(string text)
     {
         var notification = BuildNotification(text);
-        var fgsType = Build.VERSION.SdkInt >= BuildVersionCodes.UpsideDownCake
+        var fgsType = OperatingSystem.IsAndroidVersionAtLeast(34)
             ? (int)ForegroundService.TypeSpecialUse
             : 0;
         ServiceCompat.StartForeground(this, NotificationId, notification, fgsType);

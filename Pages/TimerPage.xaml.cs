@@ -161,14 +161,14 @@ public partial class TimerPage : ContentPage
     {
         if (_apps.Count == 0)
         {
-            await DisplayAlert("Empty list", "This list has no apps.", "OK");
+            await DisplayAlertAsync("Empty list", "This list has no apps.", "OK");
             return;
         }
 
         if (!AppLauncher.CanDrawOverlays())
         {
             UpdateOverlayWarning();
-            var go = await DisplayAlert(
+            var go = await DisplayAlertAsync(
                 "Permission needed",
                 "To launch apps while this one is in the background, allow 'Display over other apps'. Open settings now?",
                 "Open settings", "Cancel");
@@ -179,7 +179,7 @@ public partial class TimerPage : ContentPage
 
         if (!UsageAccess.IsGranted())
         {
-            var grant = await DisplayAlert(
+            var grant = await DisplayAlertAsync(
                 "Usage access (optional)",
                 "To stop each app's timer the moment you close it, grant 'Usage access'. Without it, timers keep counting from launch. Open settings now?",
                 "Open settings", "Skip");

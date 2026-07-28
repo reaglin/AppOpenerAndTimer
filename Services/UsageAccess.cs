@@ -22,9 +22,11 @@ public static class UsageAccess
         var ctx = Application.Context;
         var appOps = (AppOpsManager)ctx.GetSystemService(Context.AppOpsService)!;
 
-        AppOpsManagerMode mode = Build.VERSION.SdkInt >= BuildVersionCodes.Q
-            ? appOps.UnsafeCheckOpNoThrow(GetUsageStatsOp, Process.MyUid(), ctx.PackageName!)
+        // UnsafeCheckOpNoThrow is deprecated on API 36+ but still functional; its API 36
+        // replacement (attribution-source overloads) isn't needed for this simple check.
 #pragma warning disable CA1422
+        AppOpsManagerMode mode = OperatingSystem.IsAndroidVersionAtLeast(29)
+            ? appOps.UnsafeCheckOpNoThrow(GetUsageStatsOp, Process.MyUid(), ctx.PackageName!)
             : appOps.CheckOpNoThrow(GetUsageStatsOp, Process.MyUid(), ctx.PackageName!);
 #pragma warning restore CA1422
 

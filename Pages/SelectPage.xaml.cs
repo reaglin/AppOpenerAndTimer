@@ -54,7 +54,7 @@ public partial class SelectPage : ContentPage
         var packages = SelectedPackages();
         if (packages.Count == 0)
         {
-            await DisplayAlert("Nothing selected", "Tick at least one app first.", "OK");
+            await DisplayAlertAsync("Nothing selected", "Tick at least one app first.", "OK");
             return false;
         }
 
@@ -78,7 +78,7 @@ public partial class SelectPage : ContentPage
             name = name.Trim();
             if (AppListStore.Exists(name))
             {
-                var overwrite = await DisplayAlert("Name in use",
+                var overwrite = await DisplayAlertAsync("Name in use",
                     $"A list called \"{name}\" already exists. Overwrite it?", "Overwrite", "Cancel");
                 if (!overwrite)
                     return;
@@ -88,7 +88,7 @@ public partial class SelectPage : ContentPage
         }
 
         AppListStore.Save(_list);
-        await DisplayAlert("Saved", $"\"{_list.Name}\" saved.", "OK");
+        await DisplayAlertAsync("Saved", $"\"{_list.Name}\" saved.", "OK");
     }
 
     async void OnStart(object? sender, EventArgs e)

@@ -47,7 +47,7 @@ public partial class ListsPage : ContentPage
         if (GetList(sender) is not { } list)
             return;
 
-        var confirm = await DisplayAlert("Delete list", $"Delete \"{list.Name}\"?", "Delete", "Cancel");
+        var confirm = await DisplayAlertAsync("Delete list", $"Delete \"{list.Name}\"?", "Delete", "Cancel");
         if (!confirm)
             return;
 
